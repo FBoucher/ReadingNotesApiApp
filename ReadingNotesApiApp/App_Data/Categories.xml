@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<categories>
+  <add key="cloud" value="Cloud"/>
+  <add key="top" value="Suggestion of the week"/>
+  <add key="data" value="Data"/>
+  <add key="misc" value="Miscellaneous"/>
+  <add key="database" value="Databases"/>
+  <add key="dev" value="Programming"/>
+</categories>
