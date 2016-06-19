@@ -1,10 +1,15 @@
-﻿using ReadingNotesApiApp.Helpers;
+﻿using ReadingNotesApiApp.Data;
+using ReadingNotesApiApp.Helpers;
+using ReadingNotesApiApp.Models;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using System.Web.Script.Serialization;
 
 namespace ReadingNotesApiApp.Controllers
 {
@@ -15,19 +20,32 @@ namespace ReadingNotesApiApp.Controllers
         // POST api/values
         //[SwaggerOperation("Create")]
         //[SwaggerResponse(HttpStatusCode.Created)]
-        public IEnumerable<ReadingNotesApiApp.Models.Note> Get()
+        public ReadingNotes Get()
         {
 
             var notes = StorageHelper.GetAllNotefromStorage("clippings");
+            var readingNotes = new ReadingNotes();
+
+            readingNotes.Title = "Reading Notes #234";
             List<string> allTags = new List<string>();
 
             foreach (var n in notes) {
 
                 KeepUniqueTag(allTags, n.Tags);
                 n.Category = GetCategory(n.Tags);
+
+                if (readingNotes.Notes[n.Category] == null)
+                {
+                    readingNotes.Notes[n.Category] = new List<Note>();
+                }
+
+                ((List<Note>)readingNotes.Notes[n.Category]).Add(n);
             }
 
-            return notes;
+            var json = new JavaScriptSerializer().Serialize(readingNotes);
+
+
+            return readingNotes;
 
         }
 
@@ -52,7 +70,7 @@ namespace ReadingNotesApiApp.Controllers
 
         private string GetCategory(string noteTags)
         {
-            var category = "misc";
+            string category = "misc";
 
             if (!String.IsNullOrEmpty(noteTags))
             {
@@ -61,6 +79,12 @@ namespace ReadingNotesApiApp.Controllers
                 category = newListTgas[0];
 
             }
+
+            var readingNoteCategories = ReadingNoteCategories.GetCategories[category];
+            
+            if(!string.IsNullOrEmpty(readingNoteCategories))
+                category = readingNoteCategories;
+
             return category;
 
         }
