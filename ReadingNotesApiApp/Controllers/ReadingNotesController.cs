@@ -2,51 +2,63 @@
 using ReadingNotesApiApp.Helpers;
 using ReadingNotesApiApp.Models;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Web.Http;
-using System.Web.Script.Serialization;
 
 namespace ReadingNotesApiApp.Controllers
 {
     public class ReadingNotesController : ApiController
     {
 
-
-        // POST api/values
-        //[SwaggerOperation("Create")]
-        //[SwaggerResponse(HttpStatusCode.Created)]
-        public ReadingNotes Get()
+        /// <summary>
+        /// Build a JSon file with all notes regroup by category and saved it on a Blob storage
+        /// </summary>
+        /// <returns></returns>
+        [Route("BuildReadingNotes")]
+        [HttpGet]
+        public ReadingNotes BuildReadingNotes()
         {
 
-            var notes = StorageHelper.GetAllNotefromStorage("clippings");
+            var notes = StorageHelper.GetAllNotefromStorage();
             var readingNotes = new ReadingNotes();
 
-            readingNotes.Title = "Reading Notes #234";
             List<string> allTags = new List<string>();
 
             foreach (var n in notes) {
 
-                KeepUniqueTag(allTags, n.Tags);
+                allTags = KeepUniqueTag(allTags, n.Tags);
                 n.Category = GetCategory(n.Tags);
 
+                // little tweak because it's a pain to set the first caracter uppercase on the kindle.
+                n.Comment = n.Comment.First().ToString().ToUpper() + String.Join("", n.Comment.Skip(1));
+
                 if (readingNotes.Notes[n.Category] == null)
-                {
                     readingNotes.Notes[n.Category] = new List<Note>();
-                }
 
                 ((List<Note>)readingNotes.Notes[n.Category]).Add(n);
             }
 
-            var json = new JavaScriptSerializer().Serialize(readingNotes);
+            readingNotes.Title = "Reading Notes #238";
+            readingNotes.Tags = string.Join(",", allTags.OrderBy(c => c));
 
+            StorageHelper.SaveJSonReadingNotesToStorage(readingNotes.Serialize());
+            StorageHelper.SaveReadingNotesToStorage(readingNotes.ToMarkDown());
 
             return readingNotes;
 
+        }
+
+        [Route("ReProcessReadingNotes")]
+        [HttpGet]
+        public string ReProcessJSonReadingNotes(string Filename) {
+
+            ReadingNotes readNotes = ReadingNotes.CreateFromString(StorageHelper.GetJSonReadingNotes(Filename));
+            var mdNotes = readNotes.ToMarkDown();
+
+            StorageHelper.SaveReadingNotesToStorage(mdNotes);
+
+            return mdNotes;
         }
 
 
@@ -71,22 +83,17 @@ namespace ReadingNotesApiApp.Controllers
         private string GetCategory(string noteTags)
         {
             string category = "misc";
+            var readingNoteCategories = string.Empty;
 
             if (!String.IsNullOrEmpty(noteTags))
             {
                 var newListTgas = noteTags.Split('.');
 
-                category = newListTgas[0];
-
+                if (ReadingNoteCategories.GetCategories.ContainsKey(newListTgas[0]))
+                    category = newListTgas[0];
             }
 
-            var readingNoteCategories = ReadingNoteCategories.GetCategories[category];
-            
-            if(!string.IsNullOrEmpty(readingNoteCategories))
-                category = readingNoteCategories;
-
-            return category;
-
+            return ReadingNoteCategories.GetCategories[category];
         }
 
     }
