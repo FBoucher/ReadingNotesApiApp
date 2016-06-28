@@ -14,10 +14,12 @@ namespace ReadingNotesApiApp.Controllers
         /// <summary>
         /// Build a JSon file with all notes regroup by category and saved it on a Blob storage
         /// </summary>
+        /// <param name="EditionNumber">Number that shows in Title</param>
+        /// <example>Reading Notes #238"</example>
         /// <returns></returns>
         [Route("BuildReadingNotes")]
         [HttpGet]
-        public ReadingNotes BuildReadingNotes()
+        public ReadingNotes BuildReadingNotes(string EditionNumber)
         {
 
             var notes = StorageHelper.GetAllNotefromStorage();
@@ -39,7 +41,7 @@ namespace ReadingNotesApiApp.Controllers
                 ((List<Note>)readingNotes.Notes[n.Category]).Add(n);
             }
 
-            readingNotes.Title = "Reading Notes #238";
+            readingNotes.Title = string.Concat("Reading Notes #", EditionNumber);
             readingNotes.Tags = string.Join(",", allTags.OrderBy(c => c));
 
             StorageHelper.SaveJSonReadingNotesToStorage(readingNotes.Serialize());
@@ -60,6 +62,8 @@ namespace ReadingNotesApiApp.Controllers
 
             return mdNotes;
         }
+
+
 
 
         private List<string> KeepUniqueTag(List<string> allTags, string noteTags) {

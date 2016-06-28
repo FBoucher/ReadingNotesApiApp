@@ -6,10 +6,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Configuration;
 using System.IO;
-using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Threading.Tasks;
-using System.Web;
 
 namespace ReadingNotesApiApp.Helpers
 {
@@ -80,6 +76,10 @@ namespace ReadingNotesApiApp.Helpers
         private static string GetReadingNotesContainerName()
         {
             return ConfigurationManager.AppSettings["ReadingNotesContainerName"];
+        }
+
+        private static string GetReadingNotesSettingsContainerName() {
+            return ConfigurationManager.AppSettings["ReadingNotesSettings"];
         }
 
         /// <summary>
@@ -164,5 +164,29 @@ namespace ReadingNotesApiApp.Helpers
             return blobItem.Uri.LocalPath.Replace(string.Concat("/", containerName, "/"), "");
         }
 
+
+
+        public static string GetConfig() {
+            string strSettings = string.Empty;
+            var stream = GetStreamFromStorage(GetReadingNotesSettingsContainerName(), "setting.json");
+
+            using (var sr = new System.IO.StreamReader(stream))
+            {
+                strSettings = sr.ReadToEnd();
+            }
+            return strSettings;
+        }
+
+        public static string SaveConfiToStorage(string config)
+        {
+            var blobClient = BlobClient();
+            var container = blobClient.GetContainerReference(GetReadingNotesSettingsContainerName());
+
+            var filename = "setting.json";
+            var blockBlob = container.GetBlockBlobReference(filename);
+            blockBlob.UploadText(config);
+
+            return filename;
+        }
     }
 }
