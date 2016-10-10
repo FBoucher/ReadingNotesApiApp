@@ -26,6 +26,7 @@ namespace ReadingNotesApiApp.Controllers
             var readingNotes = new ReadingNotes();
 
             List<string> allTags = new List<string>();
+            allTags.Add("readingnotes");
 
             foreach (var n in notes) {
 
